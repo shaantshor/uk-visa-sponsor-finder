@@ -12,34 +12,42 @@ const DEFAULTS = {
   order: 'asc',
 };
 
+function parseParams(searchParams) {
+  const state = {};
+  for (const [key, defaultVal] of Object.entries(DEFAULTS)) {
+    state[key] = searchParams.get(key) || defaultVal;
+  }
+  return state;
+}
+
 export default function useSyncURL() {
   const [searchParams, setSearchParams] = useSearchParams();
-
-  const getState = useCallback(() => {
-    const state = {};
-    for (const [key, defaultVal] of Object.entries(DEFAULTS)) {
-      state[key] = searchParams.get(key) || defaultVal;
-    }
-    return state;
-  }, [searchParams]);
-
-  const [filters, setFilters] = useState(getState);
+  const [filters, setFilters] = useState(() => parseParams(searchParams));
   const debounceRef = useRef(null);
+  const isInternalUpdate = useRef(false);
 
+  // Sync from URL → state (only for external URL changes like back/forward)
   useEffect(() => {
-    setFilters(getState());
-  }, [searchParams, getState]);
+    if (isInternalUpdate.current) {
+      isInternalUpdate.current = false;
+      return;
+    }
+    setFilters(parseParams(searchParams));
+  }, [searchParams]);
 
   const updateFilters = useCallback((updates) => {
     setFilters(prev => {
       const next = { ...prev, ...updates };
+      // Reset page when changing search/filter params
       if ('search' in updates || 'city' in updates || 'industry' in updates ||
           'company_size' in updates || 'is_tech' in updates) {
         next.page = '1';
       }
 
+      // Debounce URL updates
       clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
+        isInternalUpdate.current = true;
         const params = new URLSearchParams();
         for (const [key, val] of Object.entries(next)) {
           if (val && val !== DEFAULTS[key]) {

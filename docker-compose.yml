@@ -21,25 +21,33 @@ services:
       - "3001:3001"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/sponsor_finder
+      SEED_FILE: /app/data/sponsors.json
       PORT: "3001"
       NODE_ENV: development
     depends_on:
       db:
         condition: service_healthy
-    command: sh -c "npm run setup && npm run dev"
+    command: >
+      sh -c "
+        node src/db/migrate.js &&
+        node src/db/seed.js &&
+        node --watch src/index.js
+      "
     volumes:
       - ./server/src:/app/src
-      - ./data:/app/../data
+      - ./data:/app/data
 
   client:
     build: ./client
     ports:
       - "5173:5173"
+    depends_on:
+      - server
+    environment:
+      VITE_API_TARGET: http://server:3001
     volumes:
       - ./client/src:/app/src
       - ./client/index.html:/app/index.html
-    environment:
-      VITE_API_URL: http://localhost:3001/api
 
 volumes:
   pgdata:

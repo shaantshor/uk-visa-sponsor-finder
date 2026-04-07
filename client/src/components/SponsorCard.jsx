@@ -74,7 +74,7 @@ export default function SponsorCard({ sponsor }) {
       )}
 
       {sponsor.description && (
-        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400 line-clamp-1 leading-relaxed">
+        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400 leading-relaxed overflow-hidden whitespace-nowrap text-ellipsis">
           {sponsor.description}
         </p>
       )}

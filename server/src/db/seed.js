@@ -4,7 +4,10 @@ const pool = require('../config/db');
 
 async function seed() {
   const data = JSON.parse(
-    fs.readFileSync(path.join(__dirname, '../../../data/sponsors.json'), 'utf8')
+    fs.readFileSync(
+      process.env.SEED_FILE || path.join(__dirname, '../../../data/sponsors.json'),
+      'utf8'
+    )
   );
 
   const client = await pool.connect();
